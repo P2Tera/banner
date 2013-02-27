@@ -1,0 +1,4 @@
+<li>
+  <strong>{banner_html}</strong> ({banner_hits}) {edit_icon} {banner_broken}<br{xhtml}>
+  {banner_description}
+</li>
