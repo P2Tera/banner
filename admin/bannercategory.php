@@ -46,12 +46,20 @@ require_once '../../auth.inc.php';
 $display = '';
 
 if (!SEC_hasRights('banner.edit')) {
+	if (is_callable('COM_createHTMLDocument')) {
+		$display = COM_startBlock ($MESSAGE[30], '',
+                                COM_getBlockTemplate ('_msg_block', 'header'));
+    $display .= $MESSAGE[34];
+    $display .= COM_endBlock (COM_getBlockTemplate ('_msg_block', 'footer'));
+		$display = COM_createHTMLDocument($display);
+	} else {
     $display .= COM_siteHeader ('menu');
     $display .= COM_startBlock ($MESSAGE[30], '',
                                 COM_getBlockTemplate ('_msg_block', 'header'));
     $display .= $MESSAGE[34];
     $display .= COM_endBlock (COM_getBlockTemplate ('_msg_block', 'footer'));
     $display .= COM_siteFooter ();
+}
     COM_accessLog("User {$_USER['username']} tried to illegally access the banner administration screen.");
     echo $display;
     exit;
@@ -485,11 +493,16 @@ if ((($mode == $LANG_ADMIN['delete']) && !empty ($LANG_ADMIN['delete'])) || ($mo
                                 . '/plugins/banner/bannercategory.php');
     } elseif (SEC_checkToken()) {
         $msg = banner_delete_category($cid);
-
+	if (is_callable('COM_createHTMLDocument')) {
+		$content = COM_showMessage($msg, 'banner');
+        $content .= banner_list_categories($root);
+		$display = COM_createHTMLDocument($content,array('what' => $LANG_BANNER_ADMIN[11]));
+	} else {
         $display .= COM_siteHeader('menu', $LANG_BANNER_ADMIN[11]);
         $display .= COM_showMessage($msg, 'banner');
         $display .= banner_list_categories($root);
         $display .= COM_siteFooter();
+	}
     } else {
         COM_accessLog("User {$_USER['username']} tried to illegally delete banner category $cid and failed CSRF checks.");
         echo COM_refresh($_CONF['site_admin_url'] . '/index.php');
@@ -504,15 +517,20 @@ if ((($mode == $LANG_ADMIN['delete']) && !empty ($LANG_ADMIN['delete'])) || ($mo
                 COM_applyFilter($_POST['group_id'], true),
                 $_POST['perm_owner'], $_POST['perm_group'],
                 $_POST['perm_members'], $_POST['perm_anon']);
-
+	if (is_callable('COM_createHTMLDocument')) {
+		$content = COM_showMessage ($msg, 'banner');
+    		$content .= banner_list_categories($root);
+		$display = COM_createHTMLDocument($content,array('what' => $LANG_BANNER_ADMIN[11]));
+	} else {
     $display .= COM_siteHeader ('menu', $LANG_BANNER_ADMIN[11]);
     $display .= COM_showMessage ($msg, 'banner');
     $display .= banner_list_categories($root);
     $display .= COM_siteFooter();
-
+	}
 // edit category
 } else if ($mode == 'edit') {
-    $display .= COM_siteHeader('menu', $LANG_BANNER_ADMIN[56]);
+
+//    $display .= COM_siteHeader('menu', $LANG_BANNER_ADMIN[56]);
     $pid = '';
     if (isset($_GET['pid'])) {
         $pid = strip_tags(COM_stripslashes($_GET['pid']));
@@ -521,11 +539,27 @@ if ((($mode == $LANG_ADMIN['delete']) && !empty ($LANG_ADMIN['delete'])) || ($mo
     if (isset($_GET['cid'])) {
         $cid = strip_tags(COM_stripslashes($_GET['cid']));
     }
+	if (is_callable('COM_createHTMLDocument')) {
+		$content = banner_edit_category($cid, $pid);
+		$display = COM_createHTMLDocument($content,array('what' => $LANG_BANNER_ADMIN[56]));
+	} else {
+    $display .= COM_siteHeader('menu', $LANG_BANNER_ADMIN[56]);
     $display .= banner_edit_category($cid, $pid);
     $display .= COM_siteFooter();
+}
 
 // nothing, so list categories
 } else {
+	if (is_callable('COM_createHTMLDocument')) {
+    if (isset ($_REQUEST['msg'])) {
+        $msg = COM_applyFilter ($_REQUEST['msg'], true);
+        if ($msg > 0) {
+            $display .= COM_showMessage ($msg, 'banner');
+        }
+    }
+    $display .= banner_list_categories($root);
+		$display = COM_createHTMLDocument($display,array('what' => $LANG_BANNER_ADMIN[11]));
+	} else {
     $display .= COM_siteHeader ('menu', $LANG_BANNER_ADMIN[11]);
     if (isset ($_REQUEST['msg'])) {
         $msg = COM_applyFilter ($_REQUEST['msg'], true);
@@ -534,7 +568,9 @@ if ((($mode == $LANG_ADMIN['delete']) && !empty ($LANG_ADMIN['delete'])) || ($mo
         }
     }
     $display .= banner_list_categories($root);
+
     $display .= COM_siteFooter();
+}
 }
 
 echo $display;

@@ -162,7 +162,7 @@ function plugin_postinstall()
         $sql = str_replace('#group#', $admin_group_id, $sql);
         DB_query($sql, 1);
         if (DB_error()) {
-            COM_error("SQL error in Banner plugin postinstall, SQL: " . $sql);
+            COM_errorLog("SQL error in Banner plugin postinstall, SQL: " . $sql);
             return false;
         }
     }
@@ -190,12 +190,18 @@ require_once $base_path . 'functions.inc';
 if (!SEC_inGroup('Root')) {
     // Someone is trying to illegally access this page
     COM_accessLog("Someone has tried to illegally access the {$pi_display_name} install/uninstall page.  User id: {$_USER['uid']}, Username: {$_USER['username']}, IP: {$_SERVER['REMOTE_ADDR']}", 1);
-
+	if (is_callable('COM_createHTMLDocument')) {
+		$content = COM_startBlock($LANG_ACCESS['accessdenied'])
+             . $LANG_ACCESS['plugin_access_denied_msg']
+             . COM_endBlock();
+		$display = COM_createHTMLDocument($content,array('what' => $LANG_ACCESS['accessdenied']));
+	} else {
     $display = COM_siteHeader('menu', $LANG_ACCESS['accessdenied'])
              . COM_startBlock($LANG_ACCESS['accessdenied'])
              . $LANG_ACCESS['plugin_access_denied_msg']
              . COM_endBlock()
              . COM_siteFooter();
+}
 
     echo $display;
     exit;
@@ -383,19 +389,33 @@ if (SEC_checkToken()) {
             }
         } else {
             // plugin needs a newer version of Geeklog
+	if (is_callable('COM_createHTMLDocument')) {
+		 $display .=COM_startBlock($LANG32[8])
+                     . '<p>' . $LANG32[9] . '</p>'
+                     . COM_endBlock();
+		$display = COM_createHTMLDocument($display,array('what' => $LANG32[8]));
+	} else {
             $display .= COM_siteHeader('menu', $LANG32[8])
                      . COM_startBlock($LANG32[8])
                      . '<p>' . $LANG32[9] . '</p>'
                      . COM_endBlock()
                      . COM_siteFooter();
         }
+        }
     } else {
         // plugin already installed
+	if (is_callable('COM_createHTMLDocument')) {
+		$display .=COM_startBlock($LANG32[6])
+                 . '<p>' . $LANG32[7] . '</p>'
+                 . COM_endBlock();
+		$display = COM_createHTMLDocument($display,array('what' => $LANG_BANNER_ADMIN[11]));
+	} else {
         $display .= COM_siteHeader('menu', $LANG01[77])
                  . COM_startBlock($LANG32[6])
                  . '<p>' . $LANG32[7] . '</p>'
                  . COM_endBlock()
                  . COM_siteFooter();
+    }
     }
 } else {
     $display = COM_refresh($_CONF['site_admin_url'].'/plugins.php');

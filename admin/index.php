@@ -44,11 +44,16 @@ require_once '../../auth.inc.php';
 // exit;
 
 $display = '';
-
+//phpinfo();
 if (!SEC_hasRights('banner.edit')) {
+	if (is_callable('COM_createHTMLDocument')) {
+		$content =COM_showMessageText($MESSAGE[34], $MESSAGE[30]);
+		$display = COM_createHTMLDocument($content,array('what' =>  $MESSAGE[30]));
+	} else {
     $display .= COM_siteHeader('menu', $MESSAGE[30])
              . COM_showMessageText($MESSAGE[34], $MESSAGE[30])
              . COM_siteFooter();
+}
     COM_accessLog("User {$_USER['username']} tried to illegally access the banner administration screen.");
     echo $display;
     exit;
@@ -303,9 +308,14 @@ function savebanner ($bid, $old_bid, $cid, $categorydd, $url, $description, $tit
                 $perm_members, $perm_anon);
     }
     if (($access < 3) || !SEC_inGroup($group_id)) {
+	if (is_callable('COM_createHTMLDocument')) {
+		$content = COM_showMessageText($MESSAGE[31], $MESSAGE[30]);
+		$display = COM_createHTMLDocument($content,array('what' => $MESSAGE[30]));
+	} else {
         $display .= COM_siteHeader('menu', $MESSAGE[30])
                  . COM_showMessageText($MESSAGE[31], $MESSAGE[30])
                  . COM_siteFooter();
+}
         COM_accessLog("User {$_USER['username']} tried to illegally submit or edit banner $bid.");
         echo $display;
         exit;
@@ -333,6 +343,15 @@ function savebanner ($bid, $old_bid, $cid, $categorydd, $url, $description, $tit
         );
 
     } else { // missing fields
+	if (is_callable('COM_createHTMLDocument')) {
+		$retval .=  COM_errorLog($LANG_BANNER_ADMIN[10],2);
+        if (DB_count ($_TABLES['banner'], 'bid', $old_bid) > 0) {
+            $retval .= editbanner ('edit', $old_bid);
+        } else {
+            $retval .= editbanner ('edit', '');
+        }
+		$retval = COM_createHTMLDocument($retval,array('what' => $LANG_BANNER_ADMIN[1]));
+	} else {
         $retval .= COM_siteHeader('menu', $LANG_BANNER_ADMIN[1]);
         $retval .= COM_errorLog($LANG_BANNER_ADMIN[10],2);
         if (DB_count ($_TABLES['banner'], 'bid', $old_bid) > 0) {
@@ -341,7 +360,7 @@ function savebanner ($bid, $old_bid, $cid, $categorydd, $url, $description, $tit
             $retval .= editbanner ('edit', '');
         }
         $retval .= COM_siteFooter();
-
+}
         return $retval;
     }
 }
@@ -538,10 +557,24 @@ if (($mode == $LANG_ADMIN['delete']) && !empty ($LANG_ADMIN['delete'])) {
             $_POST['perm_owner'], $_POST['perm_group'],
             $_POST['perm_members'], $_POST['perm_anon']);
 } else if ($mode == 'editsubmission') {
+	if (is_callable('COM_createHTMLDocument')) {
+		$display .= editbanner ($mode, COM_applyFilter ($_GET['id']));
+		$display = COM_createHTMLDocument($display,array('what' => $LANG_BANNER_ADMIN[1]));
+	} else {
     $display .= COM_siteHeader ('menu', $LANG_BANNER_ADMIN[1]);
     $display .= editbanner ($mode, COM_applyFilter ($_GET['id']));
     $display .= COM_siteFooter ();
+}
 } else if ($mode == 'edit') {
+
+	if (is_callable('COM_createHTMLDocument')) {
+    if (empty ($_GET['bid'])) {
+        $display .= editbanner ($mode);
+    } else {
+        $display .= editbanner ($mode, COM_applyFilter ($_GET['bid']));
+    }
+		$display = COM_createHTMLDocument($display,array('what' => $LANG_BANNER_ADMIN[1]));
+	} else {
     $display .= COM_siteHeader ('menu', $LANG_BANNER_ADMIN[1]);
     if (empty ($_GET['bid'])) {
         $display .= editbanner ($mode);
@@ -549,7 +582,18 @@ if (($mode == $LANG_ADMIN['delete']) && !empty ($LANG_ADMIN['delete'])) {
         $display .= editbanner ($mode, COM_applyFilter ($_GET['bid']));
     }
     $display .= COM_siteFooter ();
+}
 } else { // 'cancel' or no mode at all
+	if (is_callable('COM_createHTMLDocument')) {
+    if (isset($_GET['msg'])) {
+        $msg = COM_applyFilter($_GET['msg'], true);
+        if ($msg > 0) {
+            $display .= COM_showMessage($msg, 'banner');
+        }
+    }
+    $display .= listbanner();
+		$display = COM_createHTMLDocument($display,array('what' => $LANG_BANNER_ADMIN[11]));
+	} else {
     $display .= COM_siteHeader('menu', $LANG_BANNER_ADMIN[11]);
     if (isset($_GET['msg'])) {
         $msg = COM_applyFilter($_GET['msg'], true);
@@ -560,7 +604,7 @@ if (($mode == $LANG_ADMIN['delete']) && !empty ($LANG_ADMIN['delete'])) {
     $display .= listbanner();
     $display .= COM_siteFooter();
 }
-
+}
 echo $display;
 
 ?>

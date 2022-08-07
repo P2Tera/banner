@@ -96,16 +96,23 @@ function banner_list($message)
         $result = DB_query("SELECT owner_id,group_id,perm_owner,perm_group,perm_members,perm_anon FROM {$_TABLES['bannercategories']} WHERE cid='{$cat}'");
         $A = DB_fetchArray($result);
         if (SEC_hasAccess ($A['owner_id'], $A['group_id'], $A['perm_owner'], $A['perm_group'], $A['perm_members'], $A['perm_anon']) < 2) {
+	if (is_callable('COM_createHTMLDocument')) {
+		$display .= COM_showMessage (5, 'banner');
+		$display = COM_createHTMLDocument(display,array('what' => $page_title));
+	} else {
             $display .= COM_siteHeader ('menu', $page_title);
             $display .= COM_showMessage (5, 'banner');
             $display .= COM_siteFooter ();
+}
             echo $display;
             exit;
         }
     }
-
+	if (is_callable('COM_createHTMLDocument')) {
+		$mmenu = $page_title;
+	} else {
     $display .= COM_siteHeader ('menu', $page_title);
-
+}
     if (is_array($message) && !empty($message[0])) {
         $display .= COM_startBlock($message[0], '',
                                  COM_getBlockTemplate('_msg_block', 'header'));
@@ -399,7 +406,11 @@ if (($mode == 'report') && (isset($_USER['uid']) && ($_USER['uid'] > 1))) {
 
 if (empty ($_USER['username']) &&
     (($_CONF['loginrequired'] == 1) || ($_BAN_CONF['bannerloginrequired'] == 1))) {
+	if (is_callable('COM_createHTMLDocument')) {
+		$mmenu = $LANG_BANNER[114];
+	} else {
     $display .= COM_siteHeader ('menu', $LANG_BANNER[114]);
+}
     $display .= COM_startBlock ($LANG_LOGIN[1], '',
                                 COM_getBlockTemplate ('_msg_block', 'header'));
     $login = new Template ($_CONF['path_layout'] . 'submit');
@@ -415,9 +426,11 @@ if (empty ($_USER['username']) &&
 } else {
     $display .= banner_list($message);
 }
-
+	if (is_callable('COM_createHTMLDocument')) {
+		$display = COM_createHTMLDocument($display,array('what' => $mmenu));
+	} else {
 $display .= COM_siteFooter ();
-
+}
 echo $display;
 
 ?>
